@@ -96,3 +96,49 @@ def confusion_mat(true_labels, pred_labels):
 
     print(f"Sensitivity: {sens:.2f}")
     print(f"Specificity: {spec:.2f}")
+
+def conditional_probability(data_set):
+	# Extract data and labels
+	X = data_set.data
+	Y = data_set.target
+	
+	# Get feature names
+	feature_names = breast_cancer.feature_names
+	
+	# Number of features
+	n_features = X.shape[1]
+	
+	# Create a plot with subplots for each feature
+	fig, axes = plt.subplots(n_features // 3, 3, figsize=(15, 30))
+	axes = axes.ravel()
+	
+	# Loop over each feature
+	for i in range(n_features):
+	    # Separate data for each class (Y=0 and Y=1)
+	    X_class_0 = X[Y == 0, i]
+	    X_class_1 = X[Y == 1, i]
+	    
+	    # Fit a Gaussian distribution (mean and std dev) for each class
+	    mean_0, std_0 = np.mean(X_class_0), np.std(X_class_0)
+	    mean_1, std_1 = np.mean(X_class_1), np.std(X_class_1)
+	    
+	    # Generate a range of values for the x-axis (feature values)
+	    x_range = np.linspace(np.min(X[:, i]), np.max(X[:, i]), 100)
+	    
+	    # Compute the PDFs for each class
+	    gauss_0 = norm.pdf(x_range, mean_0, std_0)
+	    gauss_1 = norm.pdf(x_range, mean_1, std_1)
+	    
+	    # Plot the PDFs
+	    axes[i].plot(x_range, gauss_0, label='Class 0 (Malignant)', color='red')
+	    axes[i].plot(x_range, gauss_1, label='Class 1 (Benign)', color='blue')
+	    
+	    # Set plot labels and title
+	    axes[i].set_title(f'{feature_names[i]}')
+	    axes[i].set_xlabel('Feature value')
+	    axes[i].set_ylabel('Probability Density')
+	    axes[i].legend()
+	
+	plt.tight_layout()
+	plt.show()
+		
