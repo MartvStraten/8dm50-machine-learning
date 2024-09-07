@@ -1,9 +1,8 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from matplotlib.colors import ListedColormap
 from scipy.spatial.distance import euclidean
-from sklearn.preprocessing import MinMaxScaler
 from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
+from scipy.stats import norm
 
 def linear_regresiion(X_train, X_test, y_train, y_test):
     # Add a column of ones to X_train for the intercept term
@@ -34,12 +33,12 @@ def knn(k, X_train, y_train, X_test):
     
 	# Loop over all test samples
     for idx_test in range(len(X_test)):
-        test_sample = X_test[idx_test,:] # 30 dimensional
+        test_sample = X_test[idx_test, :] # 30 dimensional
         distances = []
         
 		# Loop over all training samples to calculate Euclidean distances
         for idx_train in range(len(X_train)):
-            train_sample = X_train[idx_train,:]
+            train_sample = X_train[idx_train, :]
             dist = euclidean(test_sample, train_sample)
             
 			# Fill distances list with all Euclidean distances and training index
@@ -58,7 +57,7 @@ def knn(k, X_train, y_train, X_test):
         y_hat = np.round(np.mean(y_neighbours))
         y_hat_test.append(y_hat)
         
-    return y_hat_test 
+    return np.array(y_hat_test)[:, np.newaxis]
 
 def elbow_plot(max_k, X_train, y_train, X_test, y_test):
     """ Function to plot elbow plot for multiple hyperparameter values of k. """
@@ -68,8 +67,8 @@ def elbow_plot(max_k, X_train, y_train, X_test, y_test):
 	# Loop over all values of k to find the errors
     for k in range(1, max_k + 1):
         y_hat = knn(k, X_train, y_train, X_test)
-        error = np.mean(abs(y_test - y_hat))
-        all_errors.append(error)
+        mse = np.mean((y_test - y_hat)**2)
+        all_errors.append(mse)
         k_values.append(k)
         
 	# Plot the elbow plots
@@ -77,7 +76,7 @@ def elbow_plot(max_k, X_train, y_train, X_test, y_test):
     ax.plot(k_values, all_errors, marker="o")
     ax.set_title("Elbow plot for k-nearest neighbour algorithm")
     ax.set_xlabel("K value")
-    ax.set_ylabel("Error")
+    ax.set_ylabel("Mean Squared Error")
     ax.grid()
 
 def confusion_mat(true_labels, pred_labels):
@@ -93,6 +92,7 @@ def confusion_mat(true_labels, pred_labels):
 
     fig, ax = plt.subplots(1, 1, figsize=(6, 6))
     matrix.plot(ax=ax);
+    ax.set_title("Confusion matrix")
 
     print(f"Sensitivity: {sens:.2f}")
     print(f"Specificity: {spec:.2f}")
@@ -103,7 +103,7 @@ def conditional_probability(data_set):
 	Y = data_set.target
 	
 	# Get feature names
-	feature_names = breast_cancer.feature_names
+	feature_names = data_set.feature_names
 	
 	# Number of features
 	n_features = X.shape[1]
@@ -115,29 +115,29 @@ def conditional_probability(data_set):
 	# Loop over each feature
 	for i in range(n_features):
 	    # Separate data for each class (Y=0 and Y=1)
-	    X_class_0 = X[Y == 0, i]
-	    X_class_1 = X[Y == 1, i]
+		X_class_0 = X[Y == 0, i]
+		X_class_1 = X[Y == 1, i]
 	    
 	    # Fit a Gaussian distribution (mean and std dev) for each class
-	    mean_0, std_0 = np.mean(X_class_0), np.std(X_class_0)
-	    mean_1, std_1 = np.mean(X_class_1), np.std(X_class_1)
+		mean_0, std_0 = np.mean(X_class_0), np.std(X_class_0)
+		mean_1, std_1 = np.mean(X_class_1), np.std(X_class_1)
 	    
 	    # Generate a range of values for the x-axis (feature values)
-	    x_range = np.linspace(np.min(X[:, i]), np.max(X[:, i]), 100)
+		x_range = np.linspace(np.min(X[:, i]), np.max(X[:, i]), 100)
 	    
 	    # Compute the PDFs for each class
-	    gauss_0 = norm.pdf(x_range, mean_0, std_0)
-	    gauss_1 = norm.pdf(x_range, mean_1, std_1)
+		gauss_0 = norm.pdf(x_range, mean_0, std_0)
+		gauss_1 = norm.pdf(x_range, mean_1, std_1)
 	    
 	    # Plot the PDFs
-	    axes[i].plot(x_range, gauss_0, label='Class 0 (Malignant)', color='red')
-	    axes[i].plot(x_range, gauss_1, label='Class 1 (Benign)', color='blue')
+		axes[i].plot(x_range, gauss_0, label='Class 0 (Malignant)', color='red')
+		axes[i].plot(x_range, gauss_1, label='Class 1 (Benign)', color='blue')
 	    
 	    # Set plot labels and title
-	    axes[i].set_title(f'{feature_names[i]}')
-	    axes[i].set_xlabel('Feature value')
-	    axes[i].set_ylabel('Probability Density')
-	    axes[i].legend()
+		axes[i].set_title(f'{feature_names[i]}')
+		axes[i].set_xlabel('Feature value')
+		axes[i].set_ylabel('Probability Density')
+		axes[i].legend()
 	
 	plt.tight_layout()
 	plt.show()
