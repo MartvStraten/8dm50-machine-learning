@@ -14,15 +14,15 @@ def polynomial_regression(X, y, max_order=10, max_fold=5):
         linear_model.LinearRegression()
     )	
     
-	# Create parameter grid and cross validation object
+    # Create parameter grid and cross validation object
     param_grid = {"polynomialfeatures__degree": np.arange(max_order + 1)}
     poly_grid = GridSearchCV(model, param_grid, cv=max_fold)
 
-	# Fit models with cross validation
+    # Fit models with cross validation
     poly_grid.fit(X.reshape(-1, 1), y)
     results = poly_grid.cv_results_
     
-	# Gathering the validation accuracy for each polynomial order
+    # Gathering the validation accuracy for each polynomial order
     poly_order = []
     val_acc = []
     for order in range(max_order + 1):
@@ -33,7 +33,7 @@ def polynomial_regression(X, y, max_order=10, max_fold=5):
         poly_order.append(order)
         val_acc.append(sum_acc/max_fold)
 
-	# Visualization of CV results
+    # Visualization of CV results
     fig, ax = plt.subplots(1, 2, figsize=(12,6))
     ax[0].plot(poly_order, val_acc, marker="o")
     ax[0].set_title("Evaluation polynomial regression models")
