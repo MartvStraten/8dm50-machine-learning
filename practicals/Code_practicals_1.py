@@ -4,7 +4,7 @@ from scipy.spatial.distance import euclidean
 from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
 from scipy.stats import norm
 
-def linear_regresiion(X_train, X_test, y_train, y_test):
+def linear_regression(X_train, X_test, y_train, y_test):
     # Add a column of ones to X_train for the intercept term
     X_train_bias = np.hstack([np.ones((X_train.shape[0], 1)), X_train])
 
@@ -66,14 +66,14 @@ def knn(k, X_train, y_train, X_test, regression=False):
         
     return np.array(y_hat_test)[:, np.newaxis]
 
-def elbow_plot(max_k, X_train, y_train, X_test, y_test):
+def elbow_plot(max_k, X_train, y_train, X_test, y_test, regression = False):
     """ Function to plot elbow plot for multiple hyperparameter values of k. """
     all_errors = []
     k_values = []
     
 	# Loop over all values of k to find the errors
     for k in range(1, max_k + 1):
-        y_hat = knn(k, X_train, y_train, X_test)
+        y_hat = knn(k, X_train, y_train, X_test, regression = regression)
         mse = np.mean((y_test - y_hat)**2)
         all_errors.append(mse)
         k_values.append(k)
@@ -105,47 +105,63 @@ def confusion_mat(true_labels, pred_labels):
     print(f"Specificity: {spec:.2f}")
 
 def conditional_probability(data_set):
-	# Extract data and labels
-	X = data_set.data
-	Y = data_set.target
-	
-	# Get feature names
-	feature_names = data_set.feature_names
-	
-	# Number of features
-	n_features = X.shape[1]
-	
-	# Create a plot with subplots for each feature
-	fig, axes = plt.subplots(n_features // 3, 3, figsize=(15, 30))
-	axes = axes.ravel()
-	
-	# Loop over each feature
-	for i in range(n_features):
-	    # Separate data for each class (Y=0 and Y=1)
-		X_class_0 = X[Y == 0, i]
-		X_class_1 = X[Y == 1, i]
-	    
-	    # Fit a Gaussian distribution (mean and std dev) for each class
-		mean_0, std_0 = np.mean(X_class_0), np.std(X_class_0)
-		mean_1, std_1 = np.mean(X_class_1), np.std(X_class_1)
-	    
-	    # Generate a range of values for the x-axis (feature values)
-		x_range = np.linspace(np.min(X[:, i]), np.max(X[:, i]), 100)
-	    
-	    # Compute the PDFs for each class
-		gauss_0 = norm.pdf(x_range, mean_0, std_0)
-		gauss_1 = norm.pdf(x_range, mean_1, std_1)
-	    
-	    # Plot the PDFs
-		axes[i].plot(x_range, gauss_0, label='Class 0 (Malignant)', color='red')
-		axes[i].plot(x_range, gauss_1, label='Class 1 (Benign)', color='blue')
-	    
-	    # Set plot labels and title
-		axes[i].set_title(f'{feature_names[i]}')
-		axes[i].set_xlabel('Feature value')
-		axes[i].set_ylabel('Probability Density')
-		axes[i].legend()
-	
-	plt.tight_layout()
-	plt.show()
-		
+    # Extract data and labels
+    X = data_set.data
+    Y = data_set.target
+    
+    # Get feature names
+    feature_names = data_set.feature_names
+    
+    # Number of features
+    n_features = X.shape[1]
+    
+    # Create a plot with subplots for each feature
+    fig, axes = plt.subplots(n_features // 3, 3, figsize=(15, 30))
+    axes = axes.ravel()
+    
+    # List to store the feature discrimination values
+    discrimination_scores = []
+
+    # Loop over each feature
+    for i in range(n_features):
+        # Separate data for each class (Y=0 and Y=1)
+        X_class_0 = X[Y == 0, i]
+        X_class_1 = X[Y == 1, i]
+        
+        # Fit a Gaussian distribution (mean and std dev) for each class
+        mean_0, std_0 = np.mean(X_class_0), np.std(X_class_0)
+        mean_1, std_1 = np.mean(X_class_1), np.std(X_class_1)
+        
+        # Generate a range of values for the x-axis (feature values)
+        x_range = np.linspace(np.min(X[:, i]), np.max(X[:, i]), 100)
+        
+        # Compute the PDFs for each class
+        gauss_0 = norm.pdf(x_range, mean_0, std_0)
+        gauss_1 = norm.pdf(x_range, mean_1, std_1)
+        
+        # Plot the PDFs
+        axes[i].plot(x_range, gauss_0, label='Class 0 (Malignant)', color='red')
+        axes[i].plot(x_range, gauss_1, label='Class 1 (Benign)', color='blue')
+        
+        # Set plot labels and title
+        axes[i].set_title(f'{feature_names[i]}')
+        axes[i].set_xlabel('Feature value')
+        axes[i].set_ylabel('Probability Density')
+        axes[i].legend()
+
+        # Compute the Bhattacharyya distance as a measure of separability
+        overlap = np.sqrt(gauss_0 * gauss_1)
+        bhatt_distance = -np.log(np.sum(overlap))  # Bhattacharyya distance formula
+        
+        # Append to the list of discrimination scores
+        discrimination_scores.append((feature_names[i], bhatt_distance))
+    
+    plt.tight_layout()
+    plt.show()
+    
+    # Sort features by their Bhattacharyya distance
+    best_feature = max(discrimination_scores, key=lambda x: x[1])
+
+    # Print the best discriminating feature
+    print("Best discriminating feature (Bhattacharyya distance):")
+    print(f"{best_feature[0]}: {best_feature[1]:.4f}")
