@@ -58,9 +58,10 @@ def knn(k, X_train, y_train, X_test, regression=False):
         
 		# Make prediction based on class labels of neighbours
         if regression:
-            y_hat = np.mean(y_neighbours)
+            y_hat = np.mean(y_neighbours) # regression prediction 
         else:
-            y_hat = np.round(np.mean(y_neighbours))
+            y_hat = np.round(np.mean(y_neighbours)) # classification prediciton 
+            
         y_hat_test.append(y_hat)
         
     return np.array(y_hat_test)[:, np.newaxis]
