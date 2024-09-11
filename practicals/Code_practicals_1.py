@@ -22,8 +22,11 @@ def linear_regresiion(X_train, X_test, y_train, y_test):
 
     return mse
 
-def knn(k, X_train, y_train, X_test):
-    """ K-Nearest Neighbours can be implemented from scratch in three steps:
+def knn(k, X_train, y_train, X_test, regression=False):
+    """ input: k, X_train, y_train, X_test, regression=False
+        output: y_hat_test
+    
+        K-Nearest Neighbours can be implemented from scratch in three steps:
     
     	Step 1: calculate Euclidean distance between all points with the unknown classified point.
         Step 2: find the k nearest neighbours of the point with unknown class.
@@ -54,7 +57,10 @@ def knn(k, X_train, y_train, X_test):
             y_neighbours.append(label)
         
 		# Make prediction based on class labels of neighbours
-        y_hat = np.round(np.mean(y_neighbours))
+        if regression:
+            y_hat = np.mean(y_neighbours)
+        else:
+            y_hat = np.round(np.mean(y_neighbours))
         y_hat_test.append(y_hat)
         
     return np.array(y_hat_test)[:, np.newaxis]
