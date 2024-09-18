@@ -5,6 +5,9 @@ from sklearn import linear_model
 from sklearn.preprocessing import PolynomialFeatures
 from sklearn.model_selection import GridSearchCV
 from sklearn.pipeline import make_pipeline
+from sklearn.model_selection import train_test_split
+from sklearn import datasets, neighbors
+from sklearn.metrics import roc_curve, auc
 
 def polynomial_regression(X, y, max_order=10, max_fold=5):
     """ Function that performs grid search for the order of polynomial regression. """
@@ -49,3 +52,36 @@ def polynomial_regression(X, y, max_order=10, max_fold=5):
     ax[1].set_title(f"Best performing polynomial: {poly_grid.best_index_}th order")
     ax[1].legend(["Data", "Model"])
     ax[1].grid()
+
+def roc_curve_analysis(X_train, X_test,  y_train, y_test):
+
+    # Initialize the plot
+    plt.figure()
+
+    # Loop through different values of k
+    for k in range(1, 10):
+        # Initialize the k-NN classifier
+        model = neighbors.KNeighborsClassifier(n_neighbors=k)
+
+        # Train the model using the training dataset
+        model.fit(X_train, y_train)
+
+        # Get predicted probabilities for ROC curve
+        predictions = model.predict_proba(X_test)[:, 1]
+
+        # Compute ROC curve and ROC area (AUC)
+        fpr, tpr, _ = roc_curve(y_test, predictions)
+        roc_auc = auc(fpr, tpr)
+
+        # Plot ROC curve
+        plt.plot(fpr, tpr, label='k=' + str(k) + ' (AUC = ' + str(round(roc_auc, 2)) + ')')
+
+    # Plot diagonal line
+    plt.plot([0, 1], [0, 1], color='red')
+
+    # Add title and labels
+    plt.title('ROC Curve for k-NN with Different k values')
+    plt.xlabel('False Positive Rate')
+    plt.ylabel('True Positive Rate')
+    plt.legend(loc='lower right')
+    plt.show()
