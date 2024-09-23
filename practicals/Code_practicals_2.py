@@ -7,7 +7,8 @@ from sklearn.model_selection import GridSearchCV
 from sklearn.pipeline import make_pipeline
 from sklearn.model_selection import train_test_split
 from sklearn import datasets, neighbors
-from sklearn.metrics import roc_curve, auc
+from sklearn.metrics import roc_curve, auc, confusion_matrix
+from scipy.spatial.distance import euclidean
 
 def polynomial_regression(X, y, max_order=10, max_fold=5):
     """ Function that performs grid search for the order of polynomial regression. """
@@ -85,3 +86,70 @@ def roc_curve_analysis(X_train, X_test,  y_train, y_test):
     plt.ylabel('True Positive Rate')
     plt.legend(loc='lower right')
     plt.show()
+    
+def knn(k, X_train, y_train, X_test, regression=False):
+    """ input: k, X_train, y_train, X_test, regression=False
+        output: y_hat_test
+    
+        K-Nearest Neighbours can be implemented from scratch in three steps:
+    
+    	Step 1: calculate Euclidean distance between all points with the unknown classified point.
+        Step 2: find the k nearest neighbours of the point with unknown class.
+        Step 3: make a prediction for the unknown classified point.
+    """
+    y_hat_test = []
+    
+	# Loop over all test samples
+    for idx_test in range(len(X_test)):
+        test_sample = X_test[idx_test, :] # 30 dimensional
+        distances = []
+        
+		# Loop over all training samples to calculate Euclidean distances
+        for idx_train in range(len(X_train)):
+            train_sample = X_train[idx_train, :]
+            dist = euclidean(test_sample, train_sample)
+            
+			# Fill distances list with all Euclidean distances and training index
+            distances.append((dist, idx_train))
+        
+		# Sorting the distances
+        distances.sort(key=lambda tup: tup[0])
+        
+		# Selecting k-nearest neighbours
+        y_neighbours = []
+        for idx in range(k):
+            label = y_train[distances[idx][1]]
+            y_neighbours.append(label)
+        
+		# Make prediction based on class labels of neighbours
+        if regression:
+            y_hat = np.mean(y_neighbours) # regression prediction 
+        else:
+            y_hat = np.round(np.mean(y_neighbours)) # classification prediciton 
+            
+        y_hat_test.append(y_hat)
+        
+    return np.array(y_hat_test)[:, np.newaxis]
+
+def f1_dice(X_train, X_test, y_train, y_test):
+    # Predict the labels for the test set using a k-NN classifier with k=6
+    y_hat_test = knn(6, X_train, y_train, X_test)
+    
+    # Compute the confusion matrix for the predicted and actual test labels
+    conf_matrix = confusion_matrix(y_test, np.round(y_hat_test))
+    
+    # Unpack the confusion matrix values into TN, FP, FN, TP
+    tn, fp, fn, tp = conf_matrix.ravel()
+    
+    # Calculate precision (P) and recall (R)
+    p = tp/(tp + fp)
+    r = tp/(tp + fn)
+    
+    # Compute the F1 score as the harmonic mean of precision and recall
+    f1 = 2*p*r/(p+r)
+    
+    # Compute the Dice similarity coefficient
+    dice = 2*tp/(2*tp+fp+fn)
+    
+    # Return both F1 and Dice scores
+    return f1, dice
