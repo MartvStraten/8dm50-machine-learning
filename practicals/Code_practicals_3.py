@@ -1,5 +1,7 @@
 import pandas as pd
 import numpy as np
+import matplotlib.pyplot as plt
+from sklearn.metrics import mean_squared_error
 from sklearn.linear_model import Lasso
 from sklearn.model_selection import GridSearchCV
 from sklearn.model_selection import train_test_split
@@ -38,3 +40,46 @@ def get_sorted_features(X_train, y_train, columns,  best_alpha):
     coefficient_bundle = np.array([columns, abs(lasso.coef_)]).transpose() # Create a numpy array with the column names and the absolute values of the coefficients
     coefficient_bundle = coefficient_bundle[coefficient_bundle[:, 1].argsort()[::-1]] # Sort the numpy array in descending order
     return coefficient_bundle
+
+def coefficient_profile(X_train, X_test, y_train, y_test, log_alpha):
+    """ Function that performs feature selection. 
+    params:
+    X_train: the training data
+    X_test: the test data
+    y_train: the training labels
+    y_test: the test labels
+    columns: the column names of the training data
+    alpha: a log grid of alpha values to be evaluated
+    returns:
+    A plot showing how the coefficients vary with an increasing alpha
+    """
+    
+    coefs = []
+    mse_list = []
+    bootstrap_nr = 100
+    
+    for a in log_alpha:
+        lasso = Lasso() # Create a Lasso model
+        lasso.set_params(alpha=a)
+        lasso.fit(X_train, y_train)
+        coefs.append(lasso.coef_)
+        y_pred = lasso.predict(X_test)
+        mse = mean_squared_error(y_test,y_pred)
+        mse_list.append(mse)
+    
+    fig, ax = plt.subplots(1, 2, figsize=(12,6))
+    ax[0].plot(log_alpha,coefs)
+    ax[0].set_xscale('log')
+    ax[0].set_xlabel('alpha')
+    ax[0].set_ylabel('Standardized Coefficients')
+    ax[0].set_title('Lasso coefficients as a function of alpha');
+    
+    ax[1].plot(log_alpha,mse_list)
+    ax[1].set_xscale('log')
+    ax[1].set_xlabel('alpha')
+    ax[1].set_ylabel('Mean Squared Error')
+    ax[1].set_title('MSE as a function of alpha');
+    
+    
+
+    
