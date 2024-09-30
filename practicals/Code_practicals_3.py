@@ -1,11 +1,14 @@
 import pandas as pd
 import numpy as np
+import warnings
 import matplotlib.pyplot as plt
 from sklearn.utils import resample
 from sklearn.metrics import mean_squared_error
 from sklearn.linear_model import Lasso
 from sklearn.model_selection import GridSearchCV
 from sklearn.model_selection import train_test_split
+
+warnings.filterwarnings('ignore')
 
 def hyperparamter_selection(X_train, X_test, y_train, y_test, alpha):
     """ Function that performs a grid search for a lasso linear regression model. """
@@ -87,7 +90,6 @@ def coefficient_profile(X_train, X_test, y_train, y_test, log_alpha):
     ax[0].set_title('Lasso coefficients as a function of alpha');
     
     ax[1].errorbar(log_alpha,mean_mse_list,yerr = errors, capsize=3)
-    #ax[1].plot(log_alpha,mean_mse_list)
     ax[1].set_xscale('log')
     ax[1].set_xlabel('alpha')
     ax[1].set_ylabel('Mean Squared Error')
