@@ -1,6 +1,7 @@
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
+from sklearn.utils import resample
 from sklearn.metrics import mean_squared_error
 from sklearn.linear_model import Lasso
 from sklearn.model_selection import GridSearchCV
@@ -54,18 +55,29 @@ def coefficient_profile(X_train, X_test, y_train, y_test, log_alpha):
     A plot showing how the coefficients vary with an increasing alpha
     """
     
-    coefs = []
-    mse_list = []
-    bootstrap_nr = 100
     
+    mean_mse_list = []
+    errors = []
+    bootstrap_nr = 100
+    coefs = []
+
     for a in log_alpha:
         lasso = Lasso() # Create a Lasso model
         lasso.set_params(alpha=a)
-        lasso.fit(X_train, y_train)
+        
+        mse_list = []
+        for i in range(bootstrap_nr):
+            X_bs, y_bs = resample(X_train, y_train, replace=True)        
+            lasso.fit(X_bs, y_bs)
+            
+            y_pred = lasso.predict(X_test)
+            mse = mean_squared_error(y_test,y_pred)
+            mse_list.append(mse)
+            
         coefs.append(lasso.coef_)
-        y_pred = lasso.predict(X_test)
-        mse = mean_squared_error(y_test,y_pred)
-        mse_list.append(mse)
+        mean_mse = sum(mse_list)/len(mse_list)
+        mean_mse_list.append(mean_mse)
+        errors.append(np.std(mse_list))
     
     fig, ax = plt.subplots(1, 2, figsize=(12,6))
     ax[0].plot(log_alpha,coefs)
@@ -74,11 +86,13 @@ def coefficient_profile(X_train, X_test, y_train, y_test, log_alpha):
     ax[0].set_ylabel('Standardized Coefficients')
     ax[0].set_title('Lasso coefficients as a function of alpha');
     
-    ax[1].plot(log_alpha,mse_list)
+    ax[1].errorbar(log_alpha,mean_mse_list,yerr = errors, capsize=3)
+    #ax[1].plot(log_alpha,mean_mse_list)
     ax[1].set_xscale('log')
     ax[1].set_xlabel('alpha')
     ax[1].set_ylabel('Mean Squared Error')
     ax[1].set_title('MSE as a function of alpha');
+
     
     
 
