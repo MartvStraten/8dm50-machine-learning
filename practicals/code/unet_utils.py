@@ -5,6 +5,8 @@ import gryds
 import time
 import matplotlib.pyplot as plt
 
+from Code_practicals_4 import *
+
 
 def load_data(impaths_all, test=False):
     """
@@ -72,7 +74,7 @@ def preprocessing(images, masks, segmentations, desired_shape):
     return np.array(padded_images), np.array(padded_masks), np.array(padded_segmentations)
 
 
-def extract_patches(images, segmentations, patch_size, patches_per_im, seed):
+def extract_patches(images, segmentations, patch_size, patches_per_im, seed, augment=False, prob_augment=0.25):
     """
     Extract patches from images
 
@@ -99,12 +101,15 @@ def extract_patches(images, segmentations, patch_size, patches_per_im, seed):
         y[idx * patches_per_im:(idx + 1) * patches_per_im] = np.expand_dims(
             extract_patches_2d(seg, patch_size, max_patches=patches_per_im, random_state=seed),
             axis=-1)
-
+    
+    if augment:
+        x, y = data_augmentation(x, y, prob_augment)
+    
     return x, y
 
 
 # Create a very simple datagenerator
-def datagenerator(images, segmentations, patch_size, patches_per_im, batch_size):
+def datagenerator(images, segmentations, patch_size, patches_per_im, batch_size, augment=False, prob_augment=0.25):
     """
     Simple data-generator to feed patches in batches to the network.
     To extract different patches each epoch, steps_per_epoch in fit_generator should be equal to nr_batches.
@@ -123,7 +128,7 @@ def datagenerator(images, segmentations, patch_size, patches_per_im, batch_size)
 
     while True:
         # Each epoch extract different patches from the training images
-        x, y = extract_patches(images, segmentations, patch_size, patches_per_im, seed=np.random.randint(0, 500))
+        x, y = extract_patches(images, segmentations, patch_size, patches_per_im, np.random.randint(0, 500), augment, prob_augment)
 
         # Feed data in batches to the network
         for idx in range(nr_batches):
