@@ -12,13 +12,24 @@ def data_augmentation(X_train, y_train, prob_augment=0.25):
     augmented_image     -> image patches including data augmentations
     augmented_segment   -> image segmentations including data augmentations
     """
-    for idx, (im,seg) in enumerate(zip(X_train, y_train)):
+    
+    X_train_copy = X_train.copy()
+    y_train_copy = y_train.copy()
+    
+    brightness_range = [-0.2, 0.2]
+
+    for idx, (im, seg) in enumerate(zip(X_train_copy, y_train_copy)):
         # Only augment part of the training set
         if np.random.rand() <= prob_augment:
-            # Define an interpolator objects
-            image_interpolator_r = gryds.Interpolator(im[...,0], order=3)
-            image_interpolator_g = gryds.Interpolator(im[...,1], order=3)
-            image_interpolator_b = gryds.Interpolator(im[...,2], order=3)
+            
+            # Apply random brightness adjustment
+            brightness_offset = np.random.uniform(low=brightness_range[0], high=brightness_range[1])
+            im = np.clip(im + brightness_offset, 0, 1)  # Ensuring pixel values remain between 0 and 1
+
+            # Define interpolator objects
+            image_interpolator_r = gryds.Interpolator(im[..., 0], order=3)
+            image_interpolator_g = gryds.Interpolator(im[..., 1], order=3)
+            image_interpolator_b = gryds.Interpolator(im[..., 2], order=3)
             segment_interpolator = gryds.Interpolator(seg.squeeze(), order=3)
 
             # Define random displacement
@@ -35,14 +46,14 @@ def data_augmentation(X_train, y_train, prob_augment=0.25):
             augmented_segment = segment_interpolator.transform(bspline_transformation)
 
             # Construct the images correctly
-            augmented_image = np.concatenate((np.expand_dims(augmented_image_r, -1), 
-                                            np.expand_dims(augmented_image_g, -1), 
-                                            np.expand_dims(augmented_image_b, -1)), 
-                                            axis=-1)
+            augmented_image = np.concatenate((np.expand_dims(augmented_image_r, -1),
+                                              np.expand_dims(augmented_image_g, -1),
+                                              np.expand_dims(augmented_image_b, -1)),
+                                             axis=-1)
             augmented_segment = np.round(augmented_segment)
-            
-            # Place augmented image back into patch array
-            X_train[idx,...] = augmented_image
-            y_train[idx,...] = np.expand_dims(augmented_segment, -1)
 
-    return X_train, y_train
+            # Place augmented image back into patch array
+            X_train_copy[idx, ...] = augmented_image
+            y_train_copy[idx, ...] = np.expand_dims(augmented_segment, -1)
+
+    return X_train_copy, y_train_copy
