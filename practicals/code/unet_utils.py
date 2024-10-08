@@ -74,7 +74,7 @@ def preprocessing(images, masks, segmentations, desired_shape):
     return np.array(padded_images), np.array(padded_masks), np.array(padded_segmentations)
 
 
-def extract_patches(images, segmentations, patch_size, patches_per_im, seed, augment=False, prob_augment=0.25):
+def extract_patches(images, segmentations, patch_size, patches_per_im, seed, augment=False, brightness=False, bspline=False):
     """
     Extract patches from images
 
@@ -103,13 +103,13 @@ def extract_patches(images, segmentations, patch_size, patches_per_im, seed, aug
             axis=-1)
     
     if augment:
-        x, y = data_augmentation(x, y, prob_augment)
+        x, y = data_augmentation(x, y, brightness, bspline)
     
     return x, y
 
 
 # Create a very simple datagenerator
-def datagenerator(images, segmentations, patch_size, patches_per_im, batch_size, augment=False, prob_augment=0.25):
+def datagenerator(images, segmentations, patch_size, patches_per_im, batch_size, augment=False, brightness=False, bspline=False):
     """
     Simple data-generator to feed patches in batches to the network.
     To extract different patches each epoch, steps_per_epoch in fit_generator should be equal to nr_batches.
@@ -128,7 +128,7 @@ def datagenerator(images, segmentations, patch_size, patches_per_im, batch_size,
 
     while True:
         # Each epoch extract different patches from the training images
-        x, y = extract_patches(images, segmentations, patch_size, patches_per_im, np.random.randint(0, 500), augment, prob_augment)
+        x, y = extract_patches(images, segmentations, patch_size, patches_per_im, np.random.randint(0, 500), augment, brightness, bspline)
 
         # Feed data in batches to the network
         for idx in range(nr_batches):
