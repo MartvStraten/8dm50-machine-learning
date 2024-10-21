@@ -1,10 +1,22 @@
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.model_selection import cross_val_score
+from sklearn.model_selection import cross_val_score, GridSearchCV
 from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
-
+from sklearn import svm
 import matplotlib.pyplot as plt
 import numpy as np
+
+def hyperparameter_selection(X_train, X_test, y_train, y_test, grid):
+    """ Function that performs a grid search for a SVM model. """
+
+    SVM = svm.SVC()
+    # Set up GridSearchCV with cross-validation
+    grid_search = GridSearchCV(estimator=SVM, param_grid=grid, cv=5, scoring='balanced_accuracy', verbose = 2, n_jobs=-1)
+
+    # Fit the model to the training data
+    grid_search.fit(X_train, y_train)
+    
+    return grid_search.best_params_, grid_search.best_estimator_
 
 def objective_reg(trial, X_train, y_train, max_fold=5):
     base_params = {
