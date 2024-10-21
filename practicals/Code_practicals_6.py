@@ -18,32 +18,7 @@ def hyperparameter_selection(X_train, X_test, y_train, y_test, grid):
     
     return grid_search.best_params_, grid_search.best_estimator_
 
-def objective_reg(trial, X_train, y_train, max_fold=5):
-    base_params = {
-        "oob_score": True,
-        "bootstrap": True,
-        "random_state": 333,
-    }
-    
-    # Define tunable hyperparameters
-    params = {
-        "n_estimators": trial.suggest_int(name="n_estimators", low=100, high=1000),
-        "max_depth": trial.suggest_int("max_depth", low=10, high=100), 
-        "max_features": trial.suggest_categorical(name="max_features", choices=["sqrt", "log2"]),
-        "min_samples_split": trial.suggest_int(name="min_samples_split", low=2, high=50),
-        "min_samples_leaf": trial.suggest_int(name="min_samples_leaf", low=1, high=50)
-    }
-
-    # Create the model
-    params.update(base_params)
-    model = RandomForestRegressor(**params)
-
-    # Cross validation
-    cv_score = cross_val_score(model, X_train, y_train, scoring="neg_mean_absolute_error", cv=max_fold)
-    
-    return -cv_score.mean()
-
-def objective_class(trial, X_train, y_train, max_fold=5):
+def objective(trial, X_train, y_train, max_fold=5):
     base_params = {
         "oob_score": True,
         "bootstrap": True,
